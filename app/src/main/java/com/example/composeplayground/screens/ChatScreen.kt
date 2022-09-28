@@ -2,7 +2,7 @@ package com.example.composeplayground.screens
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -34,13 +34,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +55,7 @@ import com.example.composeplayground.utils.Constants
 import com.example.composeplayground.utils.Resource
 import com.example.composeplayground.utils.toast
 import com.example.composeplayground.view_models.ChatViewModel
+import com.google.accompanist.flowlayout.FlowRow
 import kotlinx.coroutines.launch
 
 private const val TAG = "ChatScreen"
@@ -111,7 +110,7 @@ fun ChatScreen(
         }
 
         ChatBoxEditText(
-            viewModel = viewModel,
+            message = viewModel.message,
             onChange = { viewModel.updateMessage(it) },
             onSend = {
                 if (it.isEmpty()) {
@@ -161,17 +160,17 @@ private fun buildInteractiveMessage(message: String, eventName: String): Interac
 @Composable
 @Preview(showBackground = true)
 fun ChatScreenPreview() {
-    ChatScreen(viewModel = hiltViewModel())
+    ChatScreen()
 }
 
 
 @Composable
 fun ChatBoxEditText(
-    viewModel: ChatViewModel,
+    message: String,
     onChange: (message: String) -> Unit,
     onSend: (message: String) -> Unit,
 ) {
-    val message = viewModel.message
+
     Row {
         TextField(
             value = message,
@@ -199,7 +198,7 @@ fun ChatBoxEditText(
 @Composable
 @Preview(showBackground = true)
 fun ChatBoxEditTextPreview() {
-    ChatBoxEditText(hiltViewModel(), {}, {})
+    ChatBoxEditText(message = "Amazing World!", onChange = {}, onSend = {})
 }
 
 
@@ -302,14 +301,16 @@ fun ButtonGridLayout(
     isEnabled: Boolean = true,
     onClick: (button: Button) -> Unit
 ) {
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+    FlowRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 5.dp)
+            .wrapContentHeight()
     ) {
         buttons.forEach { button ->
             OutlinedButton(
-                modifier = Modifier.wrapContentSize().padding(8.dp),
+                modifier = Modifier
+                    .padding(8.dp),
                 onClick = { onClick(button) },
                 enabled = isEnabled,
                 shape = RoundedCornerShape(50),
@@ -317,10 +318,15 @@ fun ButtonGridLayout(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colors.onSecondary)
 
             ) {
-                Text(text = button.value, modifier = Modifier.padding(8.dp))
+                Text(
+                    text = button.value,
+                    modifier = Modifier.padding(8.dp),
+                    style = MaterialTheme.typography.subtitle2
+                )
             }
         }
     }
+
 }
 
 
@@ -332,6 +338,7 @@ fun ButtonGridLayoutPreview() {
             Button("1001", "Yes", "Yes", "Instant Expert Help"),
             Button("1001", "Yes", "Yes", "Online Resources"),
             Button("1001", "Yes", "Yes", "Exit Chat"),
+            Button("1001", "Yes", "Yes", "Online Resources"),
         ),
         onClick = {}
     )
@@ -343,13 +350,14 @@ fun ErrorMessage(message: String = "Error Message") {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .background(MaterialTheme.colors.error)
             .padding(16.dp),
         horizontalAlignment = Alignment.Start,
     ) {
 
         Text(
             text = message,
-            color = Color.Red,
+            color = MaterialTheme.colors.onError,
             style = MaterialTheme.typography.subtitle2,
             fontWeight = FontWeight.Bold
         )

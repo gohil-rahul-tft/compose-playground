@@ -15,6 +15,7 @@ fun String.normalText(): String {
 fun Int.translateErrorCode(): String {
     return when (this) {
         404 -> "Route Not Found"
+        401 -> "Invalid Session"
         500 -> "Internal Server Error"
         else -> "Something went wrong!"
     }

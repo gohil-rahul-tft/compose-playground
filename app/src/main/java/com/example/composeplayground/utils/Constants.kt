@@ -1,7 +1,7 @@
 package com.example.composeplayground.utils
 
 object Constants {
-    const val BASE_URL = "https://c325-116-68-242-49.in.ngrok.io/"
+    const val BASE_URL = "https://webbot.self.best/"
 
     const val DYNAMIC_MESSAGE = "dynamic"
 //    const val USER_ID = 1

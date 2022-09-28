@@ -2,6 +2,7 @@ package com.example.composeplayground.di
 
 import com.example.composeplayground.network.Api
 import com.example.composeplayground.utils.Constants
+import com.example.composeplayground.utils.SharedPrefManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,21 +22,22 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(sharedPrefManager: SharedPrefManager): OkHttpClient {
 
         val loggingInterceptor = HttpLoggingInterceptor()
         loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
 
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
-            /*.addInterceptor { chain ->
+            .addInterceptor { chain ->
                 val newRequest = chain.request().newBuilder()
+                    .header("Authorization", "Bearer ${sharedPrefManager.getString("token")}")
                     .build()
                 chain.proceed(newRequest)
-            }*/
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            }
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .writeTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
             .build()
     }
 

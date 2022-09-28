@@ -16,10 +16,10 @@ interface SafeApiCall {
             try {
                 Resource.Success(apiCall.invoke())
             } catch (exception: Exception) {
+                exception.printStackTrace()
 
                 when (exception) {
                     is HttpException -> {
-
                         /*val errorMessage =
                             JSONObject(exception.response()!!.errorBody()!!.charStream().readText())
 
@@ -27,13 +27,10 @@ interface SafeApiCall {
                             message = errorMessage.getString("message"),
                             errorCode = exception.code()
                         )*/
-
-
                         Resource.Failure(
                             message = exception.message.toString(),
                             errorCode = exception.code()
                         )
-
                     }
 
                     is IOException -> {
