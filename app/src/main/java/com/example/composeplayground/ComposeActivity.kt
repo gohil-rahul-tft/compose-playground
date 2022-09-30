@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
 import com.example.composeplayground.navigation.AppNavHost
-import com.example.composeplayground.screens.LoginScreen
 import com.example.composeplayground.ui.theme.ComposePlaygroundTheme
 import com.example.composeplayground.view_models.LoginViewModel
 import dagger.hilt.android.AndroidEntryPoint

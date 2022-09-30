@@ -32,6 +32,7 @@ private val LightColorPalette = lightColors(
     */
 )
 
+
 @Composable
 fun ComposePlaygroundTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

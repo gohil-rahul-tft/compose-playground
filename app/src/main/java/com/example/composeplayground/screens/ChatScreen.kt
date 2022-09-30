@@ -27,6 +27,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.Composable
@@ -127,7 +128,7 @@ fun ChatScreen(
                         listState.animateScrollToItem(index = messages.value.lastIndex)
                 }
 
-            }
+            },
         )
     }
 }
@@ -179,6 +180,11 @@ fun ChatBoxEditText(
             placeholder = { Text(text = "Type your message...") },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions { onSend(message) },
+            colors = TextFieldDefaults.textFieldColors(
+                textColor = MaterialTheme.colors.onPrimary,
+            ),
+            shape = RoundedCornerShape(8.dp),
+            singleLine = true
         )
 
         Button(
@@ -233,6 +239,7 @@ fun MessageCard(
             Text(
                 modifier = Modifier.padding(8.dp),
                 text = message.message,
+                style = MaterialTheme.typography.body2,
                 color = if (message.senderId == Constants.USER_ID)
                     MaterialTheme.colors.onPrimary
                 else
@@ -244,6 +251,7 @@ fun MessageCard(
         Text(
             modifier = Modifier.padding(8.dp),
             fontSize = 12.sp,
+            color = MaterialTheme.colors.onSurface,
             text = if (message.senderId == Constants.USER_ID)
                 "You"
             else
@@ -315,13 +323,16 @@ fun ButtonGridLayout(
                 enabled = isEnabled,
                 shape = RoundedCornerShape(50),
                 border = BorderStroke(1.dp, MaterialTheme.colors.secondary),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colors.onSecondary)
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colors.onSurface,
+                    backgroundColor = MaterialTheme.colors.surface
+                )
 
             ) {
                 Text(
                     text = button.value,
                     modifier = Modifier.padding(8.dp),
-                    style = MaterialTheme.typography.subtitle2
+                    style = MaterialTheme.typography.body2
                 )
             }
         }
@@ -358,7 +369,7 @@ fun ErrorMessage(message: String = "Error Message") {
         Text(
             text = message,
             color = MaterialTheme.colors.onError,
-            style = MaterialTheme.typography.subtitle2,
+            style = MaterialTheme.typography.body2,
             fontWeight = FontWeight.Bold
         )
 

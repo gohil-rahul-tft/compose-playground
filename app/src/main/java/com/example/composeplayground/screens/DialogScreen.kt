@@ -41,8 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.composeplayground.ui.theme.LightBlue
-import com.example.composeplayground.ui.theme.Purple200
+
 import com.example.composeplayground.utils.toast
 
 @Composable
@@ -147,7 +146,7 @@ fun CustomDialogUI(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 colorFilter = ColorFilter.tint(
-                    color = Purple200
+                    color = MaterialTheme.colors.primaryVariant
                 ),
                 modifier = Modifier
                     .padding(top = 35.dp)
@@ -180,7 +179,7 @@ fun CustomDialogUI(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp)
-                    .background(LightBlue),
+                    .background(MaterialTheme.colors.primaryVariant),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 TextButton(onClick = onDismiss) {

@@ -37,6 +37,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:theme="@style/Theme.ComposePlayground"
+            android:name=".ComposeXmlActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

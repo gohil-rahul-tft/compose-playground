@@ -2,6 +2,7 @@ package com.example.composeplayground.utils
 
 object Constants {
     const val BASE_URL = "https://webbot.self.best/"
+    const val SOCKET_URL = "wss://ws-feed.pro.coinbase.com"
 
     const val DYNAMIC_MESSAGE = "dynamic"
 //    const val USER_ID = 1
