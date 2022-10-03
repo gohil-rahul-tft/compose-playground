@@ -1,24 +1,35 @@
 package com.example.composeplayground.view_models
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.example.composeplayground.data.web_socket.CoinbaseRequest
+import com.example.composeplayground.data.web_socket.CoinbaseResponse
 import com.example.composeplayground.network.MessageListener
 import com.example.composeplayground.network.WebSocketManager
 import com.example.composeplayground.utils.Constants
+import com.example.composeplayground.utils.Resource
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class SocketViewModel @Inject constructor() : ViewModel(), MessageListener {
+    companion object {
+        private const val TAG = "SocketViewModel"
+    }
 
-    val messageList = mutableStateListOf<String>()
+    private val gson by lazy { Gson() }
+
+    val messageList = mutableStateListOf<CoinbaseResponse>()
+    val newMessageList = mutableStateListOf<Resource<CoinbaseResponse>>()
 
     init {
         WebSocketManager.init(Constants.SOCKET_URL, this)
+        connectSocket()
     }
 
-    fun connectSocket() {
+    private fun connectSocket() {
         WebSocketManager.connect()
     }
 
@@ -26,26 +37,36 @@ class SocketViewModel @Inject constructor() : ViewModel(), MessageListener {
         WebSocketManager.close()
     }
 
-    fun sendMessage(data: String) {
-        if (WebSocketManager.sendMessage(data)) {
+    fun sendMessage(data: CoinbaseRequest) {
+        val msg = gson.toJson(data)
+        WebSocketManager.sendMessage(msg)
+
+        /*if (WebSocketManager.sendMessage(msg)) {
             messageList.add(data)
-        }
+        }*/
     }
 
     override fun onConnectSuccess() {
-        messageList.add(" Connected successfully \n ")
+        Log.d(TAG, " Connected successfully \n ")
     }
 
-    override fun onConnectFailed() {
-        messageList.add(" Connection failed \n ")
+    override fun onConnectFailed(message: String) {
+        Log.d(TAG, " Connection failed \n ")
+        newMessageList.add(Resource.Failure(message = message))
     }
 
     override fun onClose() {
-        messageList.add(" Closed successfully \n ")
+        Log.d(TAG, " Closed successfully \n ")
     }
 
     override fun onMessage(text: String?) {
-        messageList.add(" Receive message: $text \n ")
+
+        Log.d(TAG, "onMessage: $text")
+        val response = gson.fromJson(text, CoinbaseResponse::class.java)
+
+        Log.d(TAG, "onMessage: $response")
+        messageList.add(response)
+        newMessageList.add(Resource.Success(response))
     }
 
 }

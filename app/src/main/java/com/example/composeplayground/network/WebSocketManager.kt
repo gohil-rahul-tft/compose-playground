@@ -20,12 +20,17 @@ object WebSocketManager {
     private var isConnect = false
     private var connectNum = 0
     fun init(url: String, _messageListener: MessageListener) {
+
         client = OkHttpClient.Builder()
             .writeTimeout(5, TimeUnit.SECONDS)
             .readTimeout(5, TimeUnit.SECONDS)
             .connectTimeout(10, TimeUnit.SECONDS)
             .build()
-        request = Request.Builder().url(url).build()
+
+        request = Request.Builder()
+            .url(url)
+            .build()
+
         messageListener = _messageListener
     }
 
@@ -74,7 +79,16 @@ object WebSocketManager {
      * @return boolean
      */
     fun sendMessage(text: String): Boolean {
-        return if (!isConnect()) false else mWebSocket.send(text)
+        return when {
+            !isConnect() -> false
+            else -> {
+                val msg = "{\n" +
+                        "    \"type\": \"subscribe\",\n" +
+                        "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"BTC-EUR\"] }]\n" +
+                        "}"
+                mWebSocket.send(text)
+            }
+        }
     }
 
     /**
@@ -151,20 +165,30 @@ object WebSocketManager {
                 response: Response?
             ) {
                 super.onFailure(webSocket, t, response)
-                if (response != null) {
+
+                t.printStackTrace()
+
+
+                val errorMessage = if (response != null) {
                     Log.i(
                         TAG,
                         "connect failed：" + response.message
                     )
-                }
-                Log.i(
-                    TAG,
+                    "connect failed：" + response.message
+
+                } else {
+                    Log.i(
+                        TAG,
+                        "connect failed throwable：" + t.message
+                    )
                     "connect failed throwable：" + t.message
-                )
+                }
                 isConnect = false
-                messageListener.onConnectFailed()
+                messageListener.onConnectFailed(errorMessage)
                 reconnect()
             }
         }
     }
+
+
 }
