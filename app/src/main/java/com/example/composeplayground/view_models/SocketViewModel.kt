@@ -25,11 +25,13 @@ class SocketViewModel @Inject constructor() : ViewModel(), MessageListener {
     val newMessageList = mutableStateListOf<Resource<CoinbaseResponse>>()
 
     init {
-        WebSocketManager.init(Constants.SOCKET_URL, this)
         connectSocket()
     }
 
-    private fun connectSocket() {
+    private fun connectSocket(socketUrl: String = Constants.SELF_BEST_SOCKET_URL) {
+        // /chat/667/
+        closeConnection()
+        WebSocketManager.init(socketUrl, this)
         WebSocketManager.connect()
     }
 
@@ -67,9 +69,8 @@ class SocketViewModel @Inject constructor() : ViewModel(), MessageListener {
         Log.d(TAG, "onMessage: $response")
         messageList.add(response)
         newMessageList.add(Resource.Success(response))
+
     }
-
-
 
 
     /*private fun connectToDynamicURL(){

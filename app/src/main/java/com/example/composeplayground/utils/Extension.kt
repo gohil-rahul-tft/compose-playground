@@ -47,3 +47,11 @@ fun String.formatDateTime(): String =
         Log.d(TAG, ":${e.message} ")
         ""
     }
+
+
+fun String.createSocketUrl(id: String): String {
+    // Id might be self or expert
+    // wss://webbot.self.best/ws/chat/676/
+
+    return "$this$id/"
+}

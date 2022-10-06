@@ -17,7 +17,7 @@ data class PlainMessageRequest(
 ) {
     fun convertToMessage(): Message {
         return Message(
-            senderId = Constants.USER_ID,
+            senderId = senderId,
             receiverId = Constants.BOT_ID,
             message = message,
             buttons = emptyList(),

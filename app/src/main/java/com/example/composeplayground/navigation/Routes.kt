@@ -2,7 +2,11 @@ package com.example.composeplayground.navigation
 
 const val ROUTE_LOGIN = "login"
 const val ROUTE_HOME = "home"
+//const val ROUTE_CHAT = "chat_screen?senderId={senderId},receiverId={receiverId}"
+//const val ROUTE_CHAT = "chat_screen/{senderId}/{receiverId}"
 const val ROUTE_CHAT = "chat_screen"
+const val ROUTE_EXPERT_CHAT = "expert_chat_screen"
+const val CHAT_SELECTION_SCREEN = "chat_selection_screen"
 const val DIALOG_SCREEN = "dialog_screen"
 const val PROGRESSBAR_SCREEN = "progressbar_screen"
 const val VALIDATION_SCREEN = "validation_screen"

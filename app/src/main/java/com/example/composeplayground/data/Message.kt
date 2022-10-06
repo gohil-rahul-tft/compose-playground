@@ -14,8 +14,9 @@ data class Message(
     val messageId: String = UUID.randomUUID().toString(),
     val senderId: Int = (1..2).random(),
     val receiverId: Int,
+    val channelId: String? = null,
     val message: String,
-    val buttons: List<Button> = listOf(
+    val buttons: List<Button>? = listOf(
         Button("1001", "Yes", "Yes", "Yes"),
         Button("1002", "No", "No", "No"),
     ),

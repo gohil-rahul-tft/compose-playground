@@ -1,35 +1,20 @@
-package com.example.composeplayground.screens
+package com.example.composeplayground.screens.chat
 
 import android.util.Log
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -42,29 +27,44 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.composeplayground.data.InteractiveMessageRequest
 import com.example.composeplayground.data.Message
 import com.example.composeplayground.data.PlainMessageRequest
-import com.example.composeplayground.data.response.Button
+import com.example.composeplayground.navigation.ROUTE_CHAT
+import com.example.composeplayground.navigation.ROUTE_EXPERT_CHAT
+import com.example.composeplayground.screens.chat.components.ButtonGridLayout
+import com.example.composeplayground.screens.chat.components.ChatBoxEditText
+import com.example.composeplayground.screens.chat.components.ErrorMessage
 import com.example.composeplayground.utils.Constants
 import com.example.composeplayground.utils.Resource
+import com.example.composeplayground.utils.createSocketUrl
 import com.example.composeplayground.utils.toast
 import com.example.composeplayground.view_models.ChatViewModel
-import com.google.accompanist.flowlayout.FlowRow
 import kotlinx.coroutines.launch
 
 private const val TAG = "ChatScreen"
 
 @Composable
 fun ChatScreen(
+    navController: NavController,
+    senderId: String,
+    receiverId: String,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
+
+    Log.d(
+        TAG,
+        "ChatScreen: SENDER - $senderId and RECEIVER - $receiverId"
+    )
+
+    LaunchedEffect(Unit) {
+        viewModel.connectSocket(socketUrl = Constants.SELF_BEST_SOCKET_URL.createSocketUrl(senderId))
+    }
 
     val messages = viewModel.messageList.collectAsState()
     val listState = rememberLazyListState()
@@ -101,9 +101,30 @@ fun ChatScreen(
                         LaunchedEffect(Unit) {
                             listState.animateScrollToItem(index = messages.value.lastIndex)
                         }
-                        MessageCard(message.value) { messageRequest ->
-                            viewModel.sendMessageToServer(messageRequest)
+
+                        message.value.channelId?.let {
+                            LaunchedEffect(Unit) {
+                                context.toast("${message.value.message}")
+
+                                navController.navigate(
+                                    "$ROUTE_EXPERT_CHAT?senderId=${senderId}&receiverId=${it}"
+                                ) {
+                                    popUpTo(ROUTE_CHAT) {
+                                        inclusive = true
+                                    }
+                                }
+
+                            }
+                        } ?: kotlin.run {
+
+                            MessageCard(
+                                message = message.value,
+                                senderId = senderId
+                            ) { messageRequest ->
+                                viewModel.sendMessageToServer(messageRequest)
+                            }
                         }
+
                     }
                 }
 
@@ -119,7 +140,7 @@ fun ChatScreen(
                     return@ChatBoxEditText
                 }
 
-                val messageObj = buildPlainMessage(it)
+                val messageObj = buildPlainMessage(message = it, senderId)
                 viewModel.sendMessageToServer(messageObj)
                 viewModel.updateMessage("")
 
@@ -133,25 +154,21 @@ fun ChatScreen(
     }
 }
 
-private fun buildMessage(message: String): Message {
-    return Message(
-        senderId = Constants.USER_ID,
-        receiverId = Constants.BOT_ID,
-        message = message,
-        buttons = emptyList()
-    )
-}
 
-private fun buildPlainMessage(message: String): PlainMessageRequest {
+private fun buildPlainMessage(message: String, senderId: String): PlainMessageRequest {
     return PlainMessageRequest(
-        senderId = Constants.USER_ID,
+        senderId = senderId.toInt(),
         message = message,
     )
 }
 
-private fun buildInteractiveMessage(message: String, eventName: String): InteractiveMessageRequest {
+private fun buildInteractiveMessage(
+    message: String,
+    eventName: String,
+    senderId: String
+): InteractiveMessageRequest {
     return InteractiveMessageRequest(
-        senderId = Constants.USER_ID,
+        senderId = senderId.toInt(),
         message = message,
         eventName = eventName
     )
@@ -159,62 +176,14 @@ private fun buildInteractiveMessage(message: String, eventName: String): Interac
 
 
 @Composable
-@Preview(showBackground = true)
-fun ChatScreenPreview() {
-    ChatScreen()
-}
-
-
-@Composable
-fun ChatBoxEditText(
-    message: String,
-    onChange: (message: String) -> Unit,
-    onSend: (message: String) -> Unit,
-) {
-
-    Row {
-        TextField(
-            value = message,
-            onValueChange = { onChange(it) },
-            modifier = Modifier.weight(1f),
-            placeholder = { Text(text = "Type your message...") },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-            keyboardActions = KeyboardActions { onSend(message) },
-            colors = TextFieldDefaults.textFieldColors(
-                textColor = MaterialTheme.colors.onPrimary,
-            ),
-            shape = RoundedCornerShape(8.dp),
-            singleLine = true
-        )
-
-        Button(
-            onClick = { onSend(message) },
-            enabled = true,
-            modifier = Modifier.height(56.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Send,
-                contentDescription = null
-            )
-        }
-    }
-}
-
-
-@Composable
-@Preview(showBackground = true)
-fun ChatBoxEditTextPreview() {
-    ChatBoxEditText(message = "Amazing World!", onChange = {}, onSend = {})
-}
-
-
-@Composable
 fun MessageCard(
     message: Message? = null,
+    senderId: String? = null,
     onSend: (messageRequest: InteractiveMessageRequest) -> Unit
 ) {
 
     message!!   // To Avoid preview conflict
+    senderId!!   // To Avoid preview conflict
 
     var isEnabled by rememberSaveable { mutableStateOf(true) }
 
@@ -222,7 +191,7 @@ fun MessageCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
-        horizontalAlignment = if (message.senderId == Constants.USER_ID)
+        horizontalAlignment = if (message.senderId == senderId.toInt())
             Alignment.End
         else
             Alignment.Start
@@ -230,8 +199,8 @@ fun MessageCard(
 
         Card(
             modifier = Modifier.widthIn(max = 340.dp),
-            shape = cardShapeFor(message.senderId == Constants.USER_ID),
-            backgroundColor = if (message.senderId == Constants.USER_ID)
+            shape = cardShapeFor(message.senderId == senderId.toInt()),
+            backgroundColor = if (message.senderId == senderId.toInt())
                 MaterialTheme.colors.primary
             else
                 MaterialTheme.colors.secondary
@@ -240,7 +209,7 @@ fun MessageCard(
                 modifier = Modifier.padding(8.dp),
                 text = message.message,
                 style = MaterialTheme.typography.body2,
-                color = if (message.senderId == Constants.USER_ID)
+                color = if (message.senderId == senderId.toInt())
                     MaterialTheme.colors.onPrimary
                 else
                     MaterialTheme.colors.onSecondary
@@ -258,7 +227,7 @@ fun MessageCard(
                 "Bot"
         )
 
-        if (message.buttons.isNotEmpty()) {
+        if (!message.buttons.isNullOrEmpty()) {
 
             ButtonGridLayout(
                 buttons = message.buttons,
@@ -270,6 +239,7 @@ fun MessageCard(
                 val messageObj = buildInteractiveMessage(
                     eventName = button.id,
                     message = button.value,
+                    senderId = senderId
                 )
 
                 onSend.invoke(messageObj)
@@ -299,86 +269,9 @@ fun MessageCardPreview() {
             senderId = Constants.BOT_ID,
             receiverId = Constants.USER_ID,
             message = "Hello"
-        ), {})
-}
-
-
-@Composable
-fun ButtonGridLayout(
-    buttons: List<Button>,
-    isEnabled: Boolean = true,
-    onClick: (button: Button) -> Unit
-) {
-    FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 5.dp)
-            .wrapContentHeight()
-    ) {
-        buttons.forEach { button ->
-            OutlinedButton(
-                modifier = Modifier
-                    .padding(8.dp),
-                onClick = { onClick(button) },
-                enabled = isEnabled,
-                shape = RoundedCornerShape(30),
-                border = BorderStroke(1.dp, MaterialTheme.colors.secondary),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colors.onSurface,
-                    backgroundColor = MaterialTheme.colors.surface
-                )
-
-            ) {
-                Text(
-                    text = button.value,
-                    modifier = Modifier.padding(8.dp),
-                    style = MaterialTheme.typography.body2
-                )
-            }
-        }
-    }
-
-}
-
-
-@Composable
-@Preview(showBackground = true)
-fun ButtonGridLayoutPreview() {
-    ButtonGridLayout(
-        buttons = listOf(
-            Button("1001", "Yes", "Yes", "Instant Expert Help"),
-            Button("1001", "Yes", "Yes", "Online Resources"),
-            Button("1001", "Yes", "Yes", "Exit Chat"),
-            Button("1001", "Yes", "Yes", "Online Resources"),
-        ),
-        onClick = {}
-    )
-}
-
-
-@Composable
-fun ErrorMessage(message: String = "Error Message") {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colors.error)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.Start,
-    ) {
-
-        Text(
-            text = message,
-            color = MaterialTheme.colors.onError,
-            style = MaterialTheme.typography.body2,
-            fontWeight = FontWeight.Bold
         )
-
-    }
+    ) {}
 }
 
 
-@Composable
-@Preview(showBackground = true)
-fun ErrorMessagePreview() {
-    ErrorMessage()
-}
+
