@@ -69,4 +69,16 @@ class SocketViewModel @Inject constructor() : ViewModel(), MessageListener {
         newMessageList.add(Resource.Success(response))
     }
 
+
+
+
+    /*private fun connectToDynamicURL(){
+        WebSocketManager2.init("").open{
+
+        }.failure{
+
+        }.close{
+
+        }
+    }*/
 }

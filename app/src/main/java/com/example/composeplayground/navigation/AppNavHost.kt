@@ -22,7 +22,7 @@ fun AppNavHost(
     viewModel: LoginViewModel,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = SOCKET_SCREEN
+    startDestination: String = ROUTE_CHAT
 ) {
     NavHost(
         modifier = modifier,

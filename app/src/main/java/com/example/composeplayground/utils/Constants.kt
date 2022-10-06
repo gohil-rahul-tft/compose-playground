@@ -7,7 +7,10 @@ object Constants {
 
     const val DYNAMIC_MESSAGE = "dynamic"
 //    const val USER_ID = 1
-    const val USER_ID = 855
+    /*const val USER_ID = 855
+    const val BOT_ID = 2*/
+    const val USER_ID = 676
+    const val EXPERT_ID = 776
     const val BOT_ID = 2
 }
 

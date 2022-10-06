@@ -321,7 +321,7 @@ fun ButtonGridLayout(
                     .padding(8.dp),
                 onClick = { onClick(button) },
                 enabled = isEnabled,
-                shape = RoundedCornerShape(50),
+                shape = RoundedCornerShape(30),
                 border = BorderStroke(1.dp, MaterialTheme.colors.secondary),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MaterialTheme.colors.onSurface,
