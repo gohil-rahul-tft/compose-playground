@@ -1,5 +1,6 @@
 package com.example.composeplayground.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,13 +14,13 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.Card
-import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -28,9 +29,11 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,14 +44,24 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.composeplayground.data.web_socket.CoinbaseRequest
 import com.example.composeplayground.data.web_socket.CoinbaseResponse
+import com.example.composeplayground.data.web_socket.CoinbaseWrapper
+import com.example.composeplayground.screens.chat.components.ChatBoxEditText
+import com.example.composeplayground.screens.chat.components.ErrorMessage
 import com.example.composeplayground.utils.formatDateTime
 import com.example.composeplayground.view_models.SocketViewModel
+import kotlinx.coroutines.launch
+
+
+private const val TAG = "SocketSampleScreen"
 
 @Composable
 fun SocketSampleScreen() {
     val viewModel: SocketViewModel = hiltViewModel()
-    val messageList = viewModel.messageList
+    val messageList = viewModel.newMessageList
     var message by remember { mutableStateOf("") }
+    val scrollState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -59,45 +72,52 @@ fun SocketSampleScreen() {
             modifier = Modifier
                 .padding(vertical = 4.dp)
                 .weight(1f),
+            state = scrollState
         ) {
             items(items = messageList) { message ->
-                when (message.type) {
-                    "ticker" -> StockPriceCard(message)
-                    else -> CardSelfMessage(message = "Hi")
+
+                LaunchedEffect(messageList.size > 5) {
+                    Log.d(TAG, "SocketSampleScreen: LAUNCHED EFFECT CALLED")
+                    scrollState.animateScrollToItem(messageList.lastIndex)
+                }
+
+                when (message) {
+                    is CoinbaseWrapper.Failure -> {
+                        ErrorMessage(message = message.message)
+                    }
+
+                    is CoinbaseWrapper.Response -> {
+                        StockPriceCard(data = message.value)
+                    }
+
+                    is CoinbaseWrapper.UserMessage -> {
+                        CardSelfMessage(message = message.message)
+                    }
                 }
 
             }
         }
 
-        Row {
-            TextField(
-                value = message,
-                onValueChange = { message = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text(text = "Type your message...") },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions { viewModel.sendMessage(buildMessage()) },
-                colors = TextFieldDefaults.textFieldColors(
-                    textColor = MaterialTheme.colors.onSurface,
-                ),
-                shape = RoundedCornerShape(8.dp),
-                singleLine = true
-            )
 
-            Button(
-                onClick = {
-                    viewModel.sendMessage(buildMessage())
-                    message = ""
-                }, enabled = true, modifier = Modifier.height(56.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Send,
-                    contentDescription = null
+        ChatBoxEditText(
+            message = message,
+            onChange = { message = it },
+            onSend = {
+                viewModel.sendMessage(
+                    data = buildMessage(),
+                    message = message
                 )
+                message = ""
             }
-        }
-
+        )
     }
+
+
+
+    /*LaunchedEffect(messageList.size > 5) {
+        Log.d(TAG, "SocketSampleScreen: LAUNCHED EFFECT CALLED")
+        scrollState.animateScrollToItem(messageList.lastIndex)
+    }*/
 }
 
 private fun buildMessage() = CoinbaseRequest()
@@ -110,7 +130,7 @@ fun StockPriceCard(
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
+            .widthIn(max = 340.dp)
             .wrapContentHeight()
             .padding(horizontal = 8.dp, vertical = 4.dp),
         elevation = 4.dp,

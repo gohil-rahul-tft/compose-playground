@@ -45,7 +45,7 @@ fun ExpertChatScreen(
     LaunchedEffect(Unit) {
         viewModel.connectSocket(
             socketUrl = Constants.SELF_BEST_SOCKET_URL.createSocketUrl(
-                receiverId
+                senderId
             )
         )
     }

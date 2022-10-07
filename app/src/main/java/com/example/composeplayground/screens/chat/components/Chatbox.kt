@@ -36,7 +36,7 @@ fun ChatBoxEditText(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions { onSend(message) },
             colors = TextFieldDefaults.textFieldColors(
-                textColor = MaterialTheme.colors.onPrimary,
+                textColor = MaterialTheme.colors.onSurface,
             ),
             shape = RoundedCornerShape(8.dp),
             singleLine = true

@@ -59,11 +59,21 @@ fun ChatSelectionScreen(navController: NavController) {
         Button(onClick = {
             scope.launch {
                 navController.navigate(
+                    "$ROUTE_EXPERT_CHAT?senderId=${Constants.EXPERT_ID}&receiverId=${Constants.USER_ID}"
+                )
+            }
+        }) {
+            Text(text = "Hey Expert, Chat with User AT - ${Constants.USER_ID}")
+        }
+
+        Button(onClick = {
+            scope.launch {
+                navController.navigate(
                     "$ROUTE_EXPERT_CHAT?senderId=${Constants.USER_ID}&receiverId=${Constants.EXPERT_ID}"
                 )
             }
         }) {
-            Text(text = "Chat with Expert AT - ${Constants.EXPERT_ID}")
+            Text(text = "Hey User, Chat with Expert AT - ${Constants.EXPERT_ID}")
         }
 
     }

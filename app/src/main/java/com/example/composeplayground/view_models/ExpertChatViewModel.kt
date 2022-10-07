@@ -50,6 +50,7 @@ class ExpertChatViewModel @Inject constructor() : ViewModel(), MessageListener {
     fun sendMessage(data: ExpertChatRequest) {
         val msg = gson.toJson(data)
         WebSocketManager.sendMessage(msg)
+        messageList.add(Resource.Success(data.convertToExpertChatResponse()))
     }
 
     override fun onMessage(text: String?) {
@@ -64,10 +65,6 @@ class ExpertChatViewModel @Inject constructor() : ViewModel(), MessageListener {
             if (jsonObject.has("data")) {
                 responseObj = jsonObject.getString("data")
             }
-
-            /*if (JSONObject(text).getString("type") == Constants.CHAT) {
-                return
-            }*/
 
             val response = gson.fromJson(responseObj, ExpertChatResponse::class.java)
             Log.d(TAG, "onMessage: $response")

@@ -1,5 +1,6 @@
 package com.example.composeplayground.network
 
+import android.os.Message
 import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -7,6 +8,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import retrofit2.HttpException
 import java.util.concurrent.TimeUnit
 
 object WebSocketManager {
@@ -107,10 +109,10 @@ object WebSocketManager {
     /**
      * Close connection
      */
-    fun close() {
+    fun close(message: String? = null) {
         if (isConnect()) {
             mWebSocket.cancel()
-            mWebSocket.close(1001, "The client actively closes the connection ")
+            mWebSocket.close(1001, message ?: "The client actively closes the connection ")
         }
     }
 
