@@ -17,7 +17,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -66,7 +65,7 @@ fun ChatScreen(
         viewModel.connectSocket(socketUrl = Constants.SELF_BEST_SOCKET_URL.createSocketUrl(senderId))
     }
 
-    val messages = viewModel.messageList.collectAsState()
+    val messages = viewModel.messageList
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -80,7 +79,7 @@ fun ChatScreen(
             reverseLayout = false,
             state = listState
         ) {
-            items(messages.value) { message ->
+            items(messages) { message ->
 
                 when (message) {
                     is Resource.Failure -> {
@@ -99,7 +98,7 @@ fun ChatScreen(
 
                     is Resource.Success -> {
                         LaunchedEffect(Unit) {
-                            listState.animateScrollToItem(index = messages.value.lastIndex)
+                            listState.animateScrollToItem(index = messages.lastIndex)
                         }
 
                         message.value.channelId?.let {
@@ -145,8 +144,8 @@ fun ChatScreen(
                 viewModel.updateMessage("")
 
                 scope.launch {
-                    if (messages.value.isNotEmpty())
-                        listState.animateScrollToItem(index = messages.value.lastIndex)
+                    if (messages.isNotEmpty())
+                        listState.animateScrollToItem(index = messages.lastIndex)
                 }
 
             },
@@ -157,7 +156,7 @@ fun ChatScreen(
 
 private fun buildPlainMessage(message: String, senderId: String): PlainMessageRequest {
     return PlainMessageRequest(
-        senderId = senderId.toInt(),
+        senderId = senderId,
         message = message,
     )
 }
@@ -168,7 +167,7 @@ private fun buildInteractiveMessage(
     senderId: String
 ): InteractiveMessageRequest {
     return InteractiveMessageRequest(
-        senderId = senderId.toInt(),
+        senderId = senderId,
         message = message,
         eventName = eventName
     )
@@ -191,31 +190,32 @@ fun MessageCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
-        horizontalAlignment = if (message.senderId == senderId.toInt())
+        horizontalAlignment = if (message.senderId == senderId)
             Alignment.End
         else
             Alignment.Start
     ) {
 
-        Card(
-            modifier = Modifier.widthIn(max = 340.dp),
-            shape = cardShapeFor(message.senderId == senderId.toInt()),
-            backgroundColor = if (message.senderId == senderId.toInt())
-                MaterialTheme.colors.primary
-            else
-                MaterialTheme.colors.secondary
-        ) {
-            Text(
-                modifier = Modifier.padding(8.dp),
-                text = message.message,
-                style = MaterialTheme.typography.body2,
-                color = if (message.senderId == senderId.toInt())
-                    MaterialTheme.colors.onPrimary
+        if (message.message.isNotEmpty()) {
+            Card(
+                modifier = Modifier.widthIn(max = 340.dp),
+                shape = cardShapeFor(message.senderId == senderId),
+                backgroundColor = if (message.senderId == senderId)
+                    MaterialTheme.colors.primary
                 else
-                    MaterialTheme.colors.onSecondary
-            )
+                    MaterialTheme.colors.secondary
+            ) {
+                Text(
+                    modifier = Modifier.padding(8.dp),
+                    text = message.message,
+                    style = MaterialTheme.typography.body2,
+                    color = if (message.senderId == senderId)
+                        MaterialTheme.colors.onPrimary
+                    else
+                        MaterialTheme.colors.onSecondary
+                )
+            }
         }
-
 
         Text(
             modifier = Modifier.padding(8.dp),

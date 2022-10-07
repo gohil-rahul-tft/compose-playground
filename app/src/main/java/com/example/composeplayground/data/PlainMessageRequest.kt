@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName
 
 data class PlainMessageRequest(
     @SerializedName("sender_id")
-    val senderId: Int = Constants.USER_ID,
+    val senderId: String = Constants.USER_ID,
 
     @SerializedName("event_message")
     val message: String,

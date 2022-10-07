@@ -36,16 +36,8 @@ data class Data(
             channelId = channelId,
             message = message,
             buttons = buttons,
-            senderId = try {
-                sentBy.toInt()
-            } catch (e: Exception) {
-                Constants.BOT_ID
-            },
-            receiverId = try {
-                sentTo?.toInt() ?: Constants.USER_ID
-            } catch (e: Exception) {
-                Constants.USER_ID
-            }
+            senderId = sentBy,
+            receiverId = sentTo ?: Constants.EXPERT_ID
 
         )
     }

@@ -12,8 +12,8 @@ import java.util.*
 
 data class Message(
     val messageId: String = UUID.randomUUID().toString(),
-    val senderId: Int = (1..2).random(),
-    val receiverId: Int,
+    val senderId: String = ((1..2).random()).toString(),
+    val receiverId: String,
     val channelId: String? = null,
     val message: String,
     val buttons: List<Button>? = listOf(
