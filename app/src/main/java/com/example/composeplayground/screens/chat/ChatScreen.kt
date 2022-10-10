@@ -101,12 +101,12 @@ fun ChatScreen(
                             listState.animateScrollToItem(index = messages.lastIndex)
                         }
 
-                        message.value.channelId?.let {
+                        if (!message.value.channelId.isNullOrEmpty()) {
                             LaunchedEffect(Unit) {
-                                context.toast("${message.value.message}")
+                                context.toast(message.value.message)
 
                                 navController.navigate(
-                                    "$ROUTE_EXPERT_CHAT?senderId=${senderId}&receiverId=${it}"
+                                    "$ROUTE_EXPERT_CHAT?senderId=${senderId}&receiverId=${message.value.channelId}"
                                 ) {
                                     popUpTo(ROUTE_CHAT) {
                                         inclusive = true
@@ -114,8 +114,7 @@ fun ChatScreen(
                                 }
 
                             }
-                        } ?: kotlin.run {
-
+                        } else {
                             MessageCard(
                                 message = message.value,
                                 senderId = senderId
@@ -123,6 +122,7 @@ fun ChatScreen(
                                 viewModel.sendMessageToServer(messageRequest)
                             }
                         }
+
 
                     }
                 }

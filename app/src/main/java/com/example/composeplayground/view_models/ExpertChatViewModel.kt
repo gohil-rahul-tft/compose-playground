@@ -6,27 +6,34 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.composeplayground.data.SocketUpdate
 import com.example.composeplayground.data.response.expert_chat.ExpertChatRequest
 import com.example.composeplayground.data.response.expert_chat.ExpertChatResponse
-import com.example.composeplayground.network.MessageListener
-import com.example.composeplayground.network.WebSocketManager
+import com.example.composeplayground.network.web_socket.EasyWS
+import com.example.composeplayground.network.web_socket.easyWebSocket
 import com.example.composeplayground.utils.Constants
 import com.example.composeplayground.utils.Resource
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import org.json.JSONException
 import org.json.JSONObject
 import javax.inject.Inject
 
 
 @HiltViewModel
-class ExpertChatViewModel @Inject constructor() : ViewModel(), MessageListener {
+class ExpertChatViewModel @Inject constructor() : ViewModel() {
 
     companion object {
         private const val TAG = "ExpertChatViewModel"
     }
 
     private val gson by lazy { Gson() }
+    private var easyWs: EasyWS? = null
 
     var message by mutableStateOf("")
         private set
@@ -38,64 +45,73 @@ class ExpertChatViewModel @Inject constructor() : ViewModel(), MessageListener {
     }
 
 
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            listenUpdates()
+        }
+    }
+
+
     /*----------------------------------- Web Socket --------------------------------*/
 
-    fun connectSocket(socketUrl: String = Constants.SELF_BEST_SOCKET_URL) {
-        // /chat/676/
-        closeConnection()
-        WebSocketManager.init(socketUrl, this)
-        WebSocketManager.connect()
-    }
+    fun connectSocket(socketUrl: String = Constants.SELF_BEST_SOCKET_URL) =
+        viewModelScope.launch(Dispatchers.IO) {
+            // /chat/676/
+            easyWs = OkHttpClient().easyWebSocket(socketUrl)
+        }
 
     fun sendMessage(data: ExpertChatRequest) {
         val msg = gson.toJson(data)
-        WebSocketManager.sendMessage(msg)
+        easyWs?.webSocket?.send(msg)
         messageList.add(Resource.Success(data.convertToExpertChatResponse()))
     }
 
-    override fun onMessage(text: String?) {
 
-        Log.d(TAG, "onMessage: $text")
+    private suspend fun listenUpdates() {
 
-        try {
+        easyWs?.textChannel?.consumeEach {
+            when (it) {
+                is SocketUpdate.Failure -> {
+                    messageList.add(Resource.Failure(message = it.exception?.message!!))
+                }
 
-            val jsonObject = JSONObject(text)
-            var responseObj = text!!
+                is SocketUpdate.Success -> {
 
-            if (jsonObject.has("data")) {
-                responseObj = jsonObject.getString("data")
+                    val text = it.text
+                    Log.d(TAG, "onMessage: $text")
+
+
+                    val jsonObject = JSONObject(text)
+                    var responseObj = text!!
+
+                    if (jsonObject.has("data")) {
+                        responseObj = jsonObject.getString("data")
+                    }
+
+                    val response = gson.fromJson(responseObj, ExpertChatResponse::class.java)
+                    Log.d(TAG, "onMessage: $response")
+
+                    messageList.add(Resource.Success(response))
+
+                }
             }
-
-            val response = gson.fromJson(responseObj, ExpertChatResponse::class.java)
-            Log.d(TAG, "onMessage: $response")
-
-            messageList.add(Resource.Success(response))
-        } catch (e: JSONException) {
-            e.printStackTrace()
         }
+
 
     }
 
 
     private fun closeConnection() {
-        WebSocketManager.close()
+        easyWs?.webSocket?.close(1001, "Closing manually")
         Log.d(TAG, "closeConnection: CONNECTION CLOSED!")
     }
 
 
-    override fun onConnectSuccess() {
-        Log.d(TAG, " Connected successfully \n ")
-    }
+    override fun onCleared() {
+        super.onCleared()
 
-    override fun onConnectFailed(message: String) {
-        Log.d(TAG, " Connection failed $message\n ")
-        messageList.add(Resource.Failure(message = message))
+        closeConnection()
     }
-
-    override fun onClose() {
-        Log.d(TAG, " Closed successfully \n ")
-    }
-
 
 }
 

@@ -10,22 +10,28 @@ import androidx.lifecycle.viewModelScope
 import com.example.composeplayground.data.InteractiveMessageRequest
 import com.example.composeplayground.data.Message
 import com.example.composeplayground.data.PlainMessageRequest
-import com.example.composeplayground.data.response.expert.SocketResponseToExpert
+import com.example.composeplayground.data.SocketUpdate
+import com.example.composeplayground.data.response.expert.SocketResponseByBot
 import com.example.composeplayground.network.Api
-import com.example.composeplayground.network.MessageListener
-import com.example.composeplayground.network.WebSocketManager
+import com.example.composeplayground.network.web_socket.EasyWS
+import com.example.composeplayground.network.web_socket.easyWebSocket
 import com.example.composeplayground.utils.Constants
 import com.example.composeplayground.utils.Resource
 import com.example.composeplayground.utils.SafeApiCall
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import org.json.JSONException
+import org.json.JSONObject
 import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val api: Api
-) : ViewModel(), SafeApiCall, MessageListener {
+) : ViewModel(), SafeApiCall {
 
     companion object {
         private const val TAG = "ChatViewModel"
@@ -36,6 +42,8 @@ class ChatViewModel @Inject constructor(
 
 
     private val gson by lazy { Gson() }
+    private var easyWs: EasyWS? = null
+
 
     val messageList = mutableStateListOf<Resource<Message>>()
 
@@ -61,7 +69,7 @@ class ChatViewModel @Inject constructor(
 
             else -> safeApiCall {
                 api.sendPlainMessage(data as PlainMessageRequest).convertToMessage()
-            }   // Won't called
+            }   // Will never called
         }
 
         messageList.add(response)
@@ -70,41 +78,55 @@ class ChatViewModel @Inject constructor(
 
     /*----------------------------------- Web Socket --------------------------------*/
 
-
-    fun connectSocket(socketUrl: String = Constants.SELF_BEST_SOCKET_URL) {
-        // /chat/676/
-        closeConnection()
-        WebSocketManager.init(socketUrl, this)
-        WebSocketManager.connect()
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            listenUpdates()
+        }
     }
+
+    fun connectSocket(socketUrl: String = Constants.SELF_BEST_SOCKET_URL) =
+        viewModelScope.launch(Dispatchers.IO) {
+            // /chat/676/
+            easyWs = OkHttpClient().easyWebSocket(socketUrl)
+        }
+
+
+    private suspend fun listenUpdates() {
+
+        easyWs?.textChannel?.consumeEach {
+            when (it) {
+                is SocketUpdate.Failure -> {
+                    messageList.add(Resource.Failure(message = it.exception?.message!!))
+                }
+
+                is SocketUpdate.Success -> {
+
+                    val text = it.text
+                    Log.d(TAG, "onMessage: $text")
+
+                    val response = gson.fromJson(text, SocketResponseByBot::class.java)
+
+                    Log.d(TAG, "onMessage: $response")
+
+                    messageList.add(Resource.Success(response.data.convertToMessage()))
+
+                }
+            }
+        }
+
+
+    }
+
 
     private fun closeConnection() {
-        WebSocketManager.close()
+        easyWs?.webSocket?.close(1001, "Closing manually")
+        Log.d(TAG, "closeConnection: CONNECTION CLOSED!")
     }
 
+    override fun onCleared() {
+        super.onCleared()
 
-    override fun onConnectSuccess() {
-        Log.d(TAG, " Connected successfully \n ")
-    }
-
-    override fun onConnectFailed(message: String) {
-        Log.d(TAG, " Connection failed \n ")
-    }
-
-    override fun onClose() {
-        Log.d(TAG, " Closed successfully \n ")
-    }
-
-    override fun onMessage(text: String?) {
-
-        Log.d(TAG, "onMessage: $text")
-
-        val response = gson.fromJson(text, SocketResponseToExpert::class.java)
-
-        Log.d(TAG, "onMessage: $response")
-
-        messageList.add(Resource.Success(response.data.convertToMessage()))
-
+        closeConnection()
     }
 
 }

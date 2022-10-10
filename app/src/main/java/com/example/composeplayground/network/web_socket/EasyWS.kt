@@ -4,7 +4,6 @@ import com.example.composeplayground.data.SocketUpdate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -20,8 +19,10 @@ class EasyWS(val webSocket: WebSocket, val response: Response) {
     val textChannel = Channel<SocketUpdate>()
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
-suspend fun OkHttpClient.easyWebSocket(url: String) = suspendCancellableCoroutine {
+
+suspend fun OkHttpClient.easyWebSocket(url: String) = suspendCoroutine {
+
+    println("easyWebSocket: $url")
     var easyWs: EasyWS? = null
 
     newWebSocket(Request.Builder().url(url).build(), object : WebSocketListener() {
@@ -29,15 +30,15 @@ suspend fun OkHttpClient.easyWebSocket(url: String) = suspendCancellableCoroutin
         override fun onOpen(webSocket: WebSocket, response: Response) {
             println("onOpen: $response")
             easyWs = EasyWS(webSocket, response)        // DID Type Casting
-            it.resume(easyWs!!, null)
+            it.resume(easyWs!!)
         }
 
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
             super.onFailure(webSocket, t, response)
-            it.resumeWithException(t)
             println("onFailure: $t $response ${t.cause}")
             runBlocking { easyWs!!.textChannel.send(SocketUpdate.Failure(exception = t)) }
+            it.resumeWithException(t)
         }
 
 
@@ -49,14 +50,16 @@ suspend fun OkHttpClient.easyWebSocket(url: String) = suspendCancellableCoroutin
 
         override fun onMessage(webSocket: WebSocket, text: String) {
             super.onMessage(webSocket, text)
+
+            println("onMessage: $text")
             runBlocking { easyWs!!.textChannel.send(SocketUpdate.Success(text)) }
         }
 
-        override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+        /*override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
             super.onMessage(webSocket, bytes)
 
             // println("<--[B] $bytes")
-        }
+        }*/
 
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {

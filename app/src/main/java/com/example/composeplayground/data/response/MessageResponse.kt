@@ -16,14 +16,16 @@ data class MessageResponse(
     val sentBy: String,
 
     @SerializedName("timestamp")
-    val timestamp: String
+    val timestamp: String,
+
+    @SerializedName("channel_id")
+    val channelId: String?,
 ) {
-    fun convertToMessage(): Message {
-        return Message(
-            senderId = Constants.BOT_ID,
-            receiverId = Constants.USER_ID,
-            message = message,
-            buttons = buttons,
-        )
-    }
+    fun convertToMessage() = Message(
+        senderId = Constants.BOT_ID,
+        receiverId = Constants.USER_ID,
+        message = message,
+        buttons = buttons,
+        channelId = channelId,
+    )
 }

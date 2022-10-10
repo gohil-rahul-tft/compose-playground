@@ -23,9 +23,9 @@ private const val TAG = "TestJob"
 
 fun main() = runBlocking {
     println("main Start!")
-//    socketJob()
+    socketJob()
 
-    testingChannelAndFlow()
+//    testingChannelAndFlow()
 //    client.dispatcher.executorService.shutdown()
     println("main Finished!")
 }
@@ -68,17 +68,17 @@ private fun CoroutineScope.testingChannelAndFlow() {
 
 private suspend fun socketJob() = withContext(Dispatchers.IO) {
     try {
-        val easyWS = client.easyWebSocket(Constants.SOCKET_URL)
+        val easyWS = client.easyWebSocket(Constants.SELF_BEST_SOCKET_URL)
         println("[socketJob] Open: ${easyWS.response}")
 
-        launch {
+        /*launch {
             val msg = "{\n" +
                     "    \"type\": \"subscribe\",\n" +
                     "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"BTC-EUR\"] }]\n" +
                     "}"
 
             easyWS.webSocket.send(msg)
-        }
+        }*/
         /*launch {
             repeat(5) {
                 easyWS.webSocket.send(it.toString())
@@ -87,7 +87,7 @@ private suspend fun socketJob() = withContext(Dispatchers.IO) {
             }
         }*/
 
-        launch {
+        /*launch {
             repeat(10) {
                 delay(1000)
                 if (it > 5) {
@@ -95,7 +95,7 @@ private suspend fun socketJob() = withContext(Dispatchers.IO) {
 //                client.dispatcher.executorService.shutdown()
                 }
             }
-        }
+        }*/
 
         easyWS.textChannel.consumeEach { msg ->
             when (msg) {
