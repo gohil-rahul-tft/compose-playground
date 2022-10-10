@@ -2,93 +2,100 @@ package com.example.composeplayground.view_models
 
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.ui.text.toLowerCase
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.composeplayground.data.SocketUpdate
 import com.example.composeplayground.data.web_socket.CoinbaseRequest
 import com.example.composeplayground.data.web_socket.CoinbaseResponse
 import com.example.composeplayground.data.web_socket.CoinbaseWrapper
-import com.example.composeplayground.network.MessageListener
 import com.example.composeplayground.network.WebSocketManager
+import com.example.composeplayground.network.web_socket.EasyWS
+import com.example.composeplayground.network.web_socket.easyWebSocket
 import com.example.composeplayground.utils.Constants
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import org.json.JSONObject
 import javax.inject.Inject
 
 @HiltViewModel
-class SocketViewModel @Inject constructor() : ViewModel(), MessageListener {
+class SocketViewModel @Inject constructor() : ViewModel() {
     companion object {
         private const val TAG = "SocketViewModel"
     }
 
     private val gson by lazy { Gson() }
+    private var easyWs: EasyWS? = null
 
-    val messageList = mutableStateListOf<CoinbaseResponse>()
-
-    //    val newMessageList = mutableStateListOf<Resource<CoinbaseResponse>>()
     val newMessageList = mutableStateListOf<CoinbaseWrapper<CoinbaseResponse>>()
 
     init {
-        connectSocket()
+        viewModelScope.launch(Dispatchers.IO) {
+            connectSocket()
+            listenUpdates()
+        }
     }
 
-    private fun connectSocket(socketUrl: String = Constants.SOCKET_URL) {
-        closeConnection()
-        WebSocketManager.init(socketUrl, this)
-        WebSocketManager.connect()
+    private suspend fun connectSocket(socketUrl: String = Constants.SOCKET_URL) {
+        easyWs = OkHttpClient().easyWebSocket(socketUrl)
     }
 
     private fun closeConnection() {
         Log.d(TAG, "closeConnection: CALLED")
-        WebSocketManager.close("Redirecting to different Screen!")
+//        WebSocketManager.close("Redirecting to different Screen!")
+        easyWs?.webSocket?.close(1001, "Closing manually")
     }
 
-    fun sendMessage(data: CoinbaseRequest, message: String) {
+    fun sendMessage(data: CoinbaseRequest, message: String) = viewModelScope.launch(Dispatchers.IO) {
 
         if (message == "close".lowercase()) {
+            newMessageList.add(CoinbaseWrapper.UserMessage(message = message))
             closeConnection()
-            return
+            return@launch
         }
         val msg = gson.toJson(data)
-        WebSocketManager.sendMessage(msg)
+        easyWs?.webSocket?.send(msg)
         newMessageList.add(CoinbaseWrapper.UserMessage(message = message))
-
-
-        /*if (WebSocketManager.sendMessage(msg)) {
-            messageList.add(data)
-        }*/
     }
 
-    override fun onConnectSuccess() {
-        Log.d(TAG, " Connected successfully \n ")
-    }
 
-    override fun onConnectFailed(message: String) {
-        Log.d(TAG, " Connection failed \n ")
-        newMessageList.add(CoinbaseWrapper.Failure(message = message))
-    }
+    private suspend fun listenUpdates() {
 
-    override fun onClose() {
-        Log.d(TAG, " Closed successfully \n ")
-    }
+        easyWs?.textChannel?.consumeEach {
+            when (it) {
+                is SocketUpdate.Failure -> {
+                    newMessageList.add(CoinbaseWrapper.Failure(message = it.exception?.message!!))
+                }
 
-    override fun onMessage(text: String?) {
+                is SocketUpdate.Success -> {
 
-        Log.d(TAG, "onMessage: $text")
-        val jsonObject = JSONObject(text)
+                    val message = it.text
+                    Log.d(TAG, "onMessage: $message")
+                    val jsonObject = JSONObject(message)
 
-        if (jsonObject.getString("type") == "ticker") {
-            val response = gson.fromJson(text, CoinbaseResponse::class.java)
+                    if (jsonObject.getString("type") == "ticker") {
+                        val response = gson.fromJson(message, CoinbaseResponse::class.java)
 
-            Log.d(TAG, "onMessage: $response")
-            messageList.add(response)
-//        newMessageList.add(Resource.Success(response))
-            newMessageList.add(CoinbaseWrapper.Response(response))
+                        Log.d(TAG, "onMessage: $response")
+                        newMessageList.add(CoinbaseWrapper.Response(response))
+                    }
+
+                }
+            }
         }
 
 
     }
 
+
+    override fun onCleared() {
+        super.onCleared()
+
+        closeConnection()
+    }
 
     /*private fun connectToDynamicURL(){
         WebSocketManager2.init("").open{

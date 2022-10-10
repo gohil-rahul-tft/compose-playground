@@ -2,8 +2,13 @@ package com.example.composeplayground.data
 
 import okio.ByteString
 
-data class SocketUpdate(
-    val text: String? = null,
-    val byteString: ByteString? = null,
-    val exception: Throwable? = null
-)
+sealed class SocketUpdate {
+    data class Success(
+        val text: String? = null,
+        val byteString: ByteString? = null,
+    ) : SocketUpdate()
+
+    data class Failure(
+        val exception: Throwable? = null
+    ) : SocketUpdate()
+}
