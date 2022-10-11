@@ -47,7 +47,7 @@ class ExpertChatViewModel @Inject constructor() : ViewModel() {
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            listenUpdates()
+//            listenUpdates()
         }
     }
 
@@ -58,6 +58,8 @@ class ExpertChatViewModel @Inject constructor() : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             // /chat/676/
             easyWs = OkHttpClient().easyWebSocket(socketUrl)
+            Log.d(TAG, "connectSocket: Called Listen Channel")
+            listenUpdates()
         }
 
     fun sendMessage(data: ExpertChatRequest) {

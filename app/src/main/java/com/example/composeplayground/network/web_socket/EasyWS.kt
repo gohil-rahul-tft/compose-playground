@@ -1,8 +1,11 @@
 package com.example.composeplayground.network.web_socket
 
 import com.example.composeplayground.data.SocketUpdate
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -20,6 +23,7 @@ class EasyWS(val webSocket: WebSocket, val response: Response) {
 }
 
 
+@OptIn(DelicateCoroutinesApi::class)
 suspend fun OkHttpClient.easyWebSocket(url: String) = suspendCoroutine {
 
     println("easyWebSocket: $url")
@@ -37,7 +41,7 @@ suspend fun OkHttpClient.easyWebSocket(url: String) = suspendCoroutine {
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
             super.onFailure(webSocket, t, response)
             println("onFailure: $t $response ${t.cause}")
-            runBlocking { easyWs!!.textChannel.send(SocketUpdate.Failure(exception = t)) }
+            GlobalScope.launch { easyWs!!.textChannel.send(SocketUpdate.Failure(exception = t)) }
             it.resumeWithException(t)
         }
 
@@ -52,7 +56,7 @@ suspend fun OkHttpClient.easyWebSocket(url: String) = suspendCoroutine {
             super.onMessage(webSocket, text)
 
             println("onMessage: $text")
-            runBlocking { easyWs!!.textChannel.send(SocketUpdate.Success(text)) }
+            GlobalScope.launch { easyWs!!.textChannel.send(SocketUpdate.Success(text)) }
         }
 
         /*override fun onMessage(webSocket: WebSocket, bytes: ByteString) {

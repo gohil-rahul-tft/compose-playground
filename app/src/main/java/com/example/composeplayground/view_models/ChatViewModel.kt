@@ -80,7 +80,7 @@ class ChatViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            listenUpdates()
+//            listenUpdates()
         }
     }
 
@@ -88,6 +88,7 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             // /chat/676/
             easyWs = OkHttpClient().easyWebSocket(socketUrl)
+            listenUpdates()
         }
 
 

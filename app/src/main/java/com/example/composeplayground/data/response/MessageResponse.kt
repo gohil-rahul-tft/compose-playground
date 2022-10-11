@@ -23,7 +23,7 @@ data class MessageResponse(
 ) {
     fun convertToMessage() = Message(
         senderId = Constants.BOT_ID,
-        receiverId = Constants.USER_ID,
+        receiverId = Constants.USER_ID, // todo this should be received from shared pref.
         message = message,
         buttons = buttons,
         channelId = channelId,

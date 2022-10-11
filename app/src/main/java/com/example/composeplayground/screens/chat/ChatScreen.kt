@@ -34,6 +34,7 @@ import androidx.navigation.NavController
 import com.example.composeplayground.data.InteractiveMessageRequest
 import com.example.composeplayground.data.Message
 import com.example.composeplayground.data.PlainMessageRequest
+import com.example.composeplayground.navigation.CHAT_SELECTION_SCREEN
 import com.example.composeplayground.navigation.ROUTE_CHAT
 import com.example.composeplayground.navigation.ROUTE_EXPERT_CHAT
 import com.example.composeplayground.screens.chat.components.ButtonGridLayout
@@ -103,13 +104,15 @@ fun ChatScreen(
 
                         if (!message.value.channelId.isNullOrEmpty()) {
                             LaunchedEffect(Unit) {
-                                context.toast(message.value.message)
 
+                                context.toast(message.value.channelId)
+
+                                // todo debug and check whether back press works
                                 navController.navigate(
                                     "$ROUTE_EXPERT_CHAT?senderId=${senderId}&receiverId=${message.value.channelId}"
                                 ) {
-                                    popUpTo(ROUTE_CHAT) {
-                                        inclusive = true
+                                    popUpTo(CHAT_SELECTION_SCREEN) {
+                                        inclusive = false
                                     }
                                 }
 
