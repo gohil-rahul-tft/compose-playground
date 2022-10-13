@@ -10,10 +10,13 @@ import androidx.lifecycle.viewModelScope
 import com.example.composeplayground.data.SocketUpdate
 import com.example.composeplayground.data.response.expert_chat.ExpertChatRequest
 import com.example.composeplayground.data.response.expert_chat.ExpertChatResponse
+import com.example.composeplayground.data.web_socket.CoinbaseResponse
+import com.example.composeplayground.data.web_socket.CoinbaseWrapper
 import com.example.composeplayground.network.web_socket.EasyWS
 import com.example.composeplayground.network.web_socket.easyWebSocket
 import com.example.composeplayground.utils.Constants
 import com.example.composeplayground.utils.Resource
+import com.example.composeplayground.utils.createSocketUrl
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -59,13 +62,21 @@ class ExpertChatViewModel @Inject constructor() : ViewModel() {
             // /chat/676/
             easyWs = OkHttpClient().easyWebSocket(socketUrl)
             Log.d(TAG, "connectSocket: Called Listen Channel")
-            listenUpdates()
+//            listenUpdates()
         }
 
-    fun sendMessage(data: ExpertChatRequest) {
+    fun sendMessage(data: ExpertChatRequest) = viewModelScope.launch {
+
+        easyWs = OkHttpClient().easyWebSocket(
+            Constants.SELF_BEST_SOCKET_URL.createSocketUrl(
+                data.senderId
+            )
+        )
+        Log.d(TAG, "connectSocket: Called Listen Channel")
         val msg = gson.toJson(data)
         easyWs?.webSocket?.send(msg)
         messageList.add(Resource.Success(data.convertToExpertChatResponse()))
+        closeConnection()
     }
 
 
@@ -99,6 +110,26 @@ class ExpertChatViewModel @Inject constructor() : ViewModel() {
             }
         }
 
+
+    }
+
+    fun receiveUpdates(it: String) {
+
+        val text = it
+        Log.d(TAG, "onMessage: $text")
+
+
+        val jsonObject = JSONObject(text)
+        var responseObj = text!!
+
+        if (jsonObject.has("data")) {
+            responseObj = jsonObject.getString("data")
+        }
+
+        val response = gson.fromJson(responseObj, ExpertChatResponse::class.java)
+        Log.d(TAG, "onMessage: $response")
+
+        messageList.add(Resource.Success(response))
 
     }
 

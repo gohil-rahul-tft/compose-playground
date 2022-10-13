@@ -48,6 +48,10 @@
             android:name=".services.CoinbaseService"
             android:exported="true" />
 
+        <service
+            android:name=".services.ExpertChatService"
+            android:exported="true" />
+
     </application>
 
 </manifest>

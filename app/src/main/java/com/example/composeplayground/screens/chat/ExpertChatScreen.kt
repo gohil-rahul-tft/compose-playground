@@ -1,5 +1,9 @@
 package com.example.composeplayground.screens.chat
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.NavController
 import com.example.composeplayground.data.response.expert_chat.ExpertChatRequest
 import com.example.composeplayground.screens.chat.components.ChatBoxEditText
@@ -37,24 +42,45 @@ fun ExpertChatScreen(
     receiverId: String,
     viewModel: ExpertChatViewModel = hiltViewModel()
 ) {
+    val messages = viewModel.messageList
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
+    
     Log.d(
         TAG,
         "ExpertChatScreen: SENDER - $senderId and RECEIVER - $receiverId"
     )
 
     LaunchedEffect(Unit) {
-        viewModel.connectSocket(
+        /*viewModel.connectSocket(
             socketUrl = Constants.SELF_BEST_SOCKET_URL.createSocketUrl(
                 senderId
             )
+        )*/
+
+        // on below line we are creating a new broad cast manager.
+        val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+            // we will receive data updates in onReceive method.
+            override fun onReceive(context: Context?, intent: Intent) {
+                // Get extra data included in the Intent
+                val message = intent.getStringExtra("message")
+                // on below line we are updating the data in our text view.
+
+                Log.d(TAG, "onReceive: $message")
+                viewModel.receiveUpdates(message!!)
+            }
+        }
+
+
+        // on below line we are registering our local broadcast manager.
+        LocalBroadcastManager.getInstance(context).registerReceiver(
+            broadcastReceiver, IntentFilter(Constants.EXPERT_CHAT_ACTION)
         )
     }
 
-    val messages = viewModel.messageList
-    val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+
 
     Column(
         modifier = Modifier

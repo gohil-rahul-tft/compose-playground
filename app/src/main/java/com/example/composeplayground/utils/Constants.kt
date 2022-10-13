@@ -18,6 +18,8 @@ object Constants {
     const val EXPERT_ID = "776"
     const val BOT_ID = "bot"
     const val CHAT = "chat"
+
+    const val EXPERT_CHAT_ACTION = "expert-chat-action"
 }
 
 

@@ -26,7 +26,7 @@ fun AppNavHost(
     viewModel: LoginViewModel,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = SOCKET_SCREEN
+    startDestination: String = CHAT_SELECTION_SCREEN
 ) {
     NavHost(
         modifier = modifier,
