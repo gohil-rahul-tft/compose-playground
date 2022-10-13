@@ -2,7 +2,7 @@ package com.example.composeplayground.utils
 
 object Constants {
     const val BASE_URL = "https://webbot.self.best/"
-    const val SOCKET_URL = "wss://ws-feed.pro.coinbase.com"
+    const val COINBASE_URL = "wss://ws-feed.pro.coinbase.com"
 
 //        const val SELF_BEST_SOCKET_URL = "wss://webbot.self.best/ws/chat/676/"
     const val SELF_BEST_SOCKET_URL = "wss://webbot.self.best/ws/chat/"

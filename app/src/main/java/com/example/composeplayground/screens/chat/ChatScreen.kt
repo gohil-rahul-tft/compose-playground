@@ -43,6 +43,7 @@ import com.example.composeplayground.screens.chat.components.ErrorMessage
 import com.example.composeplayground.utils.Constants
 import com.example.composeplayground.utils.Resource
 import com.example.composeplayground.utils.createSocketUrl
+import com.example.composeplayground.utils.normalText
 import com.example.composeplayground.utils.toast
 import com.example.composeplayground.view_models.ChatViewModel
 import kotlinx.coroutines.launch
@@ -137,7 +138,7 @@ fun ChatScreen(
             message = viewModel.message,
             onChange = { viewModel.updateMessage(it) },
             onSend = {
-                if (it.isEmpty()) {
+                if (it.normalText().isEmpty()) {
                     context.toast("Please Enter Message!")
                     return@ChatBoxEditText
                 }

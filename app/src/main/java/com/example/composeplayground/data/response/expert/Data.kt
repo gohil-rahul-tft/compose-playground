@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName
 
 data class Data(
 
-    // This should be HTML Message
+    //todo This should be HTML Message
     @SerializedName("message")
     val message: String,
 

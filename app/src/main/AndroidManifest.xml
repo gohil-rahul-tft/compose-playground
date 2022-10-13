@@ -44,6 +44,10 @@
             android:name=".ComposeXmlActivity"
             android:exported="false" />
 
+        <service
+            android:name=".services.CoinbaseService"
+            android:exported="true" />
+
     </application>
 
 </manifest>
